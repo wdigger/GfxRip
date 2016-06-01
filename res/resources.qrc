@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/res/">
+	<file>width_increase.svg</file>
+	<file>width_decrease.svg</file>
+	<file>height_increase.svg</file>
+	<file>height_decrease.svg</file>
+	<file>height_increase8.svg</file>
+	<file>height_decrease8.svg</file>
+    </qresource>
+</RCC>

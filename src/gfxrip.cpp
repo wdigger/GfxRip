@@ -1,134 +1,83 @@
-// #define ALLEGRO_STATICLINK
+#include "gfxrip.h"
 
-#include <allegro.h>
-#include "winalleg.h"
-#include "tdgui.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
-volatile int target_game_time = 0;
+gr_ripper_t::gr_ripper_t() {
+  source = NULL;
+  source_size = 0;
 
-int fsize;
-FILE * file;
+  palette = NULL;
+  palette_size = 0;
+  generate_random_palette(256);
 
-unsigned char * mem = 0;
+  offset = 0;
 
-#define scrW 800
-#define scrH 600
+  blXSize = 320/8;
+  blYSize = 200;
 
-#define hole 2
-#define legend 9
+  bits = 1;
 
-int offset = 0;
-//int offset = 1322704;
-int blXSize = 320/8;
-int blYSize = 200;
-//int blYSize = 112;
+  skip = 0;
+  skipmode = skip_after_picture;
 
-int contin_save = 1;
+  reverse = false;
+  mode = 0;
+  palsearchmode = 2;
+}
 
-int bits = 1;
-//int bits = 8;
+gr_ripper_t::~gr_ripper_t() {
+}
 
-int skip = 0;
-int skipmode = 0; // 0 = skip bytes after picture , 1 = skip bytes after each bitplane
-char skipmoder;
+void
+gr_ripper_t::add_handler(gr_ripper_handler *handler) {
+  handlers.push_back(handler);
+}
 
-bool reverse = false;
-int mode = 0;
-int palsearchmode = 2;
+void
+gr_ripper_t::set_source(const void *data, size_t size) {
+  if (source != NULL) {
+    free((void*)source);
+    source = NULL;
+    source_size = 0;
+  }
 
-char pmoder[4] = { 'S', 'X', 'E', 'A' };
+  source = (const unsigned char*)data;
+  source_size = size;
 
-BITMAP * bitmap;
+  data_changed();
+}
 
-RGB pal[256];
+size_t
+gr_ripper_t::get_image_count() {
+  return (size_t)(((float)source_size / (float)get_image_size()) + 1.f);
+}
 
-int numX;
-int numY;
+gr_bitmap_t *
+gr_ripper_t::get_image(size_t index) {
+  gr_bitmap_t *bitmap = new gr_bitmap_t(blXSize*8, blYSize);
+  bitmap->set_palette(palette);
+  drawbitmap(bitmap, get_image_offset(index), 0, 0);
+  return bitmap;
+}
 
-bool zoom = false;
-
-char goto_num[255];
-
-int ttt=0;
-int palfound = 0;
-
-int bplorder[8] = {0,1,2,3,4,5,6,7};
-
-char gotottt[256] = "Go To BYTE:";
-
-DIALOG goto_dialog[] =
-{
-	/* (dialog proc)         (x)   (y)   (w)  (h)   (fg)(bg) (key)    (flags)  (d1)  (d2)    (dp) */
-	{ d_billwin_proc,         0,    0,  180,  60,   255,  0,    0,         0,
-																 BW_BUFFEREDUPDATE,    0,    gotottt },
-		
-	{ d_billbutton_proc,	100,   28,   70,  15,   255,  0,   27,    D_EXIT,    0,    0,    "DONE"},
-
-	{ d_billedit_proc,		 10,   30,   70,  12,     0,  0,    0,         0,    8,    0,    goto_num },
-	
-	{ NULL,                   0,    0,    0,   0,     0,  0,    0,         0,    0,    0,    NULL }
-};
-
-char save_name[255] = "p.bmp";
-char save_x[255] = "1";
-char save_y[255] = "1";
-char save_border[255] = "0";
-char save_bcolor[255] = "253";
-
-DIALOG save_dialog[] =
-{
-	/* (dialog proc)         (x)   (y)   (w)  (h)   (fg)(bg) (key)    (flags)  (d1)  (d2)    (dp) */
-	{ d_billwin_proc,         0,    0,  320, 130,   255,  0,    0,         0,
-																 BW_BUFFEREDUPDATE,    0,    "Save Picture(s)" },
-		
-	{ d_billbutton_proc,	210,  105,   70,  15,   255,  0,   27,    D_EXIT,    0,    0,    "EXIT"},
-	
-	{ d_billtext_proc,       10,   23,    0,   0,     0,  0,    0,         0,    0,    0,    "Filename:" },
-	{ d_billedit_proc,		 90,   21,  220,  12,     0,  0,    0,         0,  200,    0,    save_name },
-
-	{ d_billtext_proc,       10,   50,    0,   0,     0,  0,    0,         0,    0,    0,    "Pictures in X:" },
-	{ d_billedit_proc,		130,   48,   40,  12,     0,  0,    0,         0,    8,    0,    save_x },
-	
-	{ d_billtext_proc,       10,   70,    0,   0,     0,  0,    0,         0,    0,    0,    "Pictures in Y:" },
-	{ d_billedit_proc,		130,   68,   40,  12,     0,  0,    0,         0,    8,    0,    save_y },
-
-	{ d_billtext_proc,      190,   40,    0,   0,     0,  0,    0,         0,    0,    0,    "Save Direction:" },
-	{ d_billradio_proc,		190,   55,   60,  12,     0,  0,    0,D_SELECTED,    0,    0,    "Left -> Right" },
-	{ d_billradio_proc,		190,   70,   60,  12,     0,  0,    0,         0,    0,    0,    "Up -> Down" },
-
-	{ d_billbutton_proc,	 40,  105,   70,  15,   255,  0,   27,    D_EXIT,    0,    0,    "SAVE"},
-
-	{ d_billtext_proc,       10,   90,    0,   0,     0,  0,    0,         0,    0,    0,    "Border Around:" },
-	{ d_billedit_proc,		130,   88,   40,  12,     0,  0,    0,         0,    8,    0,    save_border },
-	
-	{ d_billtext_proc,      185,   90,    0,   0,     0,  0,    0,         0,    0,    0,    "Colour:" },
-	{ d_billedit_proc,		250,   88,   40,  12,     0,  0,    0,         0,    8,    0,    save_bcolor },
-	
-	{ NULL,                   0,    0,    0,   0,     0,  0,    0,         0,    0,    0,    NULL }
-};
-
-int getpixelcol(int pos, int x, int y)
-{
+size_t
+gr_ripper_t::getpixelcol(size_t pos, size_t x, size_t y) {
 	bool bit[8];
-	int p;
-	int byte1;
+  size_t p;
+  size_t byte1;
 	int bit1;
 	int nn;
 	int bitn;
-	int i;
+  size_t i;
 
-	for (i=0; i < 8; i++)
-	{
+  for (i=0; i < 8; i++) {
 		bit[i]=false;
 	}
 
-	for (i=0; i < bits; i++)
-	{
-		switch (mode)
-		{
+  for (i=0; i < bits; i++) {
+    switch (mode) {
 		case 0:
 			// Amiga type bitplanes
 			p = pos+(blXSize*blYSize)*(i);
@@ -141,13 +90,10 @@ int getpixelcol(int pos, int x, int y)
 			break;
 		case 2:
 			// mode == 2	// Amiga Sprite !!!
-			if (i < 2)
-			{
+      if (i < 2) {
 				p = pos+blXSize*(i);
 				nn = x+((2*y)*(blXSize*8));
-			}
-			else
-			{
+      } else {
 				p = pos+blXSize*(i-2)+(blYSize*blXSize)*2;
 				nn = x+((2*y)*(blXSize*8));
 			}
@@ -163,39 +109,29 @@ int getpixelcol(int pos, int x, int y)
 			nn = (i*4)+x%4;
 			break;
 		}
-		if (skipmode == 1)
-		{
+    if (skipmode == 1) {
 			p+=skip*i;
 		}
 		byte1 = nn/8;
 		bit1 = 7-(nn%8);
-		if (reverse)
-		{
+    if (reverse) {
 			bitn = (bits-i)-1;
-		}
-		else
-		{
+    } else {
 			bitn = i;
 		}
-		if (p+byte1 < fsize)
-		{
-			if (mem[p+byte1] & (1 << bit1))
-			{
+    if (p+byte1 < source_size) {
+      if (source[p+byte1] & (1 << bit1)) {
 				bit[bitn] = true;
-			}
-			else
-			{
+      } else {
 				bit[bitn] = false;
 			}
-		}
-		else
-		{
+    } else {
 			bit[bitn] = false;
 		}
 	}
+
 	int col = 0;
-	for (i=0; i < bits; i++)
-	{
+  for (i=0; i < bits; i++) {
 		if (bit[bplorder[i]])
 		{
 			col+=1<<i;
@@ -204,317 +140,209 @@ int getpixelcol(int pos, int x, int y)
 	return col;
 }
 
-void drawbitmap(BITMAP * bmp, int pos, int xx, int yy)
-{
-	for (int x = 0; x < blXSize*8; x ++)
-	{
-		for (int y = 0; y < blYSize; y++)
-		{
-			putpixel(bmp, xx+x, yy+y, getpixelcol(pos, x, y));
+void
+gr_ripper_t::drawbitmap(gr_bitmap_t *bmp, size_t pos, size_t xx, size_t yy) {
+  for (size_t x = 0; x < blXSize*8; x ++) {
+    for (size_t y = 0; y < blYSize; y++) {
+      bmp->putpixel(xx+x, yy+y, getpixelcol(pos, x, y));
 		}
 	}
 }
 
-void drawstuff()
-{
-	int xx, yy;
-
-	int pos = offset;
-
-	for (int y=0; y < numY; y++)
-	{
-		for (int x=0; x < numX; x++)
-		{
-			xx = x*(blXSize*8+hole);
-			yy = legend+y*(blYSize+hole);
-
-			drawbitmap(bitmap, pos, xx, yy);
-//			pos+=((blXSize*blYSize)*bits)+skip;
-			if (skipmode == 0)
-			{
-				pos+=((blXSize*blYSize)*bits)+skip;
-			}
-			else
-			{
-				pos+=((blXSize*blYSize+skip)*bits);
-			}
-		}
-	}
+size_t
+gr_ripper_t::get_image_size() {
+  if (skipmode == 0) {
+    return ((blXSize * blYSize) * bits) + skip;
+  } else {
+    return (blXSize * blYSize + skip) * bits;
+  }
 }
 
-void draw_zoom()
-{
+size_t
+gr_ripper_t::get_image_offset(size_t index) {
+  return offset + (get_image_size() * index);
+}
+
+/*
+void
+draw_zoom() {
 	int xx, yy;
 	
 	xx = scrW-(blXSize*8*2+4);
 	yy = scrH-(blYSize*2+4);
 
-	if (xx < scrW/2)
-	{
+  if (xx < scrW/2) {
 		xx = scrW/2;
 	}
-	if (yy < scrH/2)
-	{
+  if (yy < scrH/2) {
 		yy = scrH/2;
 	}
 	stretch_blit(bitmap, bitmap, 0, legend, blXSize*8, blYSize, xx+2, yy+2, blXSize*8*2, blYSize*2);
 	rect(bitmap,xx,yy,scrW-1,scrH-1,makecol(0,0,255));
 	rect(bitmap,xx+1,yy+1,scrW-2,scrH-2,253);
 }
+*/
 
-static BITMAPINFO *get_bitmap_info(BITMAP * bitmap, PALETTE pal)
-{
-   BITMAPINFO *bi;
-   int x;
-   int bpp;
+gr_size_t
+gr_ripper_t::get_image_size(size_t /*index*/) {
+  gr_size_t size;
 
-   bi = (BITMAPINFO *)malloc(sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 256);
+  size.width = blXSize*8;
+  size.height = blYSize;
 
-   bpp = 8;
-
-   ZeroMemory(&bi->bmiHeader, sizeof(BITMAPINFOHEADER));
-
-   bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-   bi->bmiHeader.biBitCount = 8;
-   bi->bmiHeader.biPlanes = 1;
-   bi->bmiHeader.biWidth = bitmap->w;
-   bi->bmiHeader.biHeight = -bitmap->h;
-   bi->bmiHeader.biClrUsed = 256;
-   bi->bmiHeader.biCompression = BI_RGB;
-
-   if (pal) {
-      for (x = 0; x < 256; x++) {
-	 bi->bmiColors[x].rgbRed = _rgb_scale_6[pal[x].r];
-	 bi->bmiColors[x].rgbGreen = _rgb_scale_6[pal[x].g];
-	 bi->bmiColors[x].rgbBlue = _rgb_scale_6[pal[x].b];
-	 bi->bmiColors[x].rgbReserved = 0;
-      }
-   }
-
-   return bi;
+  return size;
 }
 
+char *
+gr_ripper_t::get_status() {
+  char pmoder[4] = { 'S', 'X', 'E', 'A' };
 
-static BYTE *get_dib(BITMAP * bitmap)
-{
-   int bpp;
-   int y;
-   int pitch;
-   BYTE *pixels;
+  char rev;
+  if (reverse) {
+    rev = 'R';
+  } else {
+    rev = 'N';
+  }
 
-   bpp = 8;
-   pitch = bitmap->w;
-   pitch = (pitch + 3) & ~3;	/* align on dword */
+  char moder[3];
+  switch (mode) {
+    case 0:
+      strcpy(moder, "AM");
+      break;
+    case 1:
+      strcpy(moder, "ST");
+      break;
+    case 2:
+      strcpy(moder, "SP");
+      break;
+    case 3:
+      strcpy(moder, "C+");
+      break;
+    case 4:
+      strcpy(moder, "C-");
+      break;
+  }
 
-   pixels = (BYTE *) malloc(bitmap->h * pitch);
-   if (!pixels)
-      return NULL;
+  if (skipmode == 0) {
+    skipmoder = 'P';
+  } else {
+    skipmoder = 'B';
+  }
 
-   /* this code will probably need optimalization. if anybody can
-    * optimalize it, do so!
-    */
-	 for (y = 0; y < bitmap->h; y++) {
-	    memcpy(pixels + y * pitch, bitmap->line[y], bitmap->w);
-	 }
-   return pixels;
+  char str[1024];
+  sprintf(str, "Off:%7i Siz: X:%4lu Y:%4lu Bit:%lu Pal%c:%7i Mode:%s Skip-%c:%4i Order:%c %i%i%i%i%i%i%i%i",
+          offset, blXSize*8, blYSize, bits, pmoder[palsearchmode], palfound, moder, skipmoder, skip, rev,
+          bplorder[7], bplorder[6], bplorder[5], bplorder[4], bplorder[3], bplorder[2], bplorder[1], bplorder[0] );
+
+  return strdup(str);
 }
 
-#if 0
-HBITMAP convert_bitmap_to_hbitmap2(BITMAP * bitmap)
-{
-   HDC hdc;
-   HBITMAP hbmp;
-   BITMAPINFO *bi;
-   HPALETTE hpal, holdpal;
-   BYTE *pixels;
+void
+gr_ripper_t::generate_random_palette(size_t size) {
+  if (palette != NULL) {
+    delete[] palette;
+    palette = NULL;
+    palette_size = 0;
+  }
 
-   pixels = get_dib(bitmap);
+  palette = new gr_color_t[size];
 
-   /* when we have DIB, we can convert it to DDB */
-   hdc = GetDC(NULL);
-
-   bi = get_bitmap_info(bitmap, _current_palette);
-
-   hpal = convert_palette_to_hpalette(_current_palette);
-   holdpal = SelectPalette(hdc, hpal, TRUE);
-   RealizePalette(hdc);
-   hbmp = CreateDIBitmap(hdc, &bi->bmiHeader, CBM_INIT, pixels, bi, DIB_RGB_COLORS);
-   ReleaseDC(NULL, hdc);
-
-   SelectPalette(hdc, holdpal, TRUE);
-   DeleteObject(hpal);
-
-   free(pixels);
-   free(bi);
-
-   return hbmp;
-}
-#endif
-
-void copyBitmapToClipboard(BITMAP *bmp) {
-#if 0
-    if (OpenClipboard(win_get_window())) {
-        if (EmptyClipboard()) {
-            HBITMAP hbmp = convert_bitmap_to_hbitmap2(bmp);
-            if (hbmp) {
-                if (!SetClipboardData(CF_BITMAP, hbmp)) {
-                    DeleteObject(hbmp);
-                }                
-                CloseClipboard();
-            }
-        } 
-    }
-#endif
-}
-
-void copy_to_clip()
-{
-	BITMAP * bm = create_bitmap(blXSize*8, blYSize);
-
-	blit(bitmap, bm, 0, legend, 0, 0, blXSize*8, blYSize);
-
-	copyBitmapToClipboard(bm);
-
-	destroy_bitmap(bm);
-
-}
-
-void refresh()
-{
-	clear_to_color(bitmap, 253);
-
-	text_mode(-1);
-
-	numX = scrW/(blXSize*8+hole);
-	numY = (scrH-legend)/(blYSize+hole);
-	
-	if (numX == 0)
-	{
-		numX = 1;
-	}
-	if (numY == 0)
-	{
-		numY= 1;
-	}
-	char rev;
-	if (reverse)
-	{
-		rev = 'R';
-	}
-	else
-	{
-		rev = 'N';
-	}
-
-	char moder[3];
-	switch (mode)
-	{
-	case 0:
-		strcpy(moder, "AM");
-		break;
-	case 1:
-		strcpy(moder, "ST");
-		break;
-	case 2:
-		strcpy(moder, "SP");
-		break;
-	case 3:
-		strcpy(moder, "C+");
-		break;
-	case 4:
-		strcpy(moder, "C-");
-		break;
-	}
-	if (skipmode == 0)
-	{
-		skipmoder = 'P';
-	}
-	else
-	{
-		skipmoder = 'B';
-	}
-	textprintf(bitmap, font, 0, 0, 254, "Off:%7i Siz: X:%4i Y:%4i Bit:%i Vis.X:%2i Y:%2i Pal%c:%7i Mode:%s Skip-%c:%4i Order:%c %i%i%i%i%i%i%i%i", offset,blXSize*8, blYSize, bits, numX, numY, pmoder[palsearchmode], palfound, moder, skipmoder, skip, rev,
-		bplorder[7], bplorder[6], bplorder[5], bplorder[4], bplorder[3], bplorder[2], bplorder[1], bplorder[0] );
-	
-	drawstuff();
-
-	if (zoom)
-	{
-		draw_zoom();
-	}
-
-	blit(bitmap, screen, 0, 0, 0, 0, scrW, scrH);		
-}
-
-void genpal()
-{
 	srand(1);
-	for (int i=0; i < 256; i++)
-	{
-		pal[i].r = rand()%64;
-		pal[i].g = rand()%64;
-		pal[i].b = rand()%64;
+  for (size_t i = 0; i < size; i++) {
+    palette[i].r = rand()%64;
+    palette[i].g = rand()%64;
+    palette[i].b = rand()%64;
+    palette[i].a = 0xFF;
 	}
-	pal[1].r = pal[1].g = pal[1].b = 0;
-	pal[0].r = pal[0].g = pal[0].b = 63;
-	pal[254].r = pal[254].g = pal[254].b = 0;
-	pal[253].r = pal[253].g = pal[253].b = 50;
-	pal[253].b = 53;
+  palette[1].r = palette[1].g = palette[1].b = 0;
+  palette[0].r = palette[0].g = palette[0].b = 63;
+  palette[254].r = palette[254].g = palette[254].b = 0;
+  palette[253].r = palette[253].g = palette[253].b = 50;
+  palette[253].b = 53;
 }
-int parse_number(char * str)
-{
+
+void
+gr_ripper_t::data_changed() {
+  std::list<gr_ripper_handler*>::iterator it = handlers.begin();
+  for(;it != handlers.end(); ++it) {
+    (*it)->image_updated();
+  }
+}
+
+void
+gr_ripper_t::set_width(size_t width) {
+  if (width < 1) {
+    return;
+  }
+
+  blXSize = width;
+  data_changed();
+}
+
+void
+gr_ripper_t::set_height(size_t height) {
+  if (height < 1) {
+    return;
+  }
+
+  blYSize = height;
+  data_changed();
+}
+
+void
+gr_ripper_t::set_bits(size_t bits) {
+  if ((bits < 1) || (bits > 8)) {
+    return;
+  }
+
+  this->bits = bits;
+  data_changed();
+}
+
+int
+parse_number(char * str) {
 	int t;
 
-	if (str[0] == 0)
-	{
+  if (str[0] == 0) {
 		return 0;
 	}
 	sscanf(str, "%d", &t);
 	return t;
 }
-
-void goto_bye()
-{
+/*
+void
+goto_bye() {
 	sprintf(gotottt, "Go To BYTE:");
 
 	sprintf(goto_num, "%i", offset);
-	unscare_mouse();
-	
-	init_moveable(goto_dialog);
 
-	show_mouse(screen);
-
-	do_dialog (goto_dialog, 0);
-	
-	shutdown_moveable(goto_dialog);
-
-	scare_mouse();
+  unscare_mouse();
+  init_moveable(goto_dialog);
+  show_mouse(screen);
+  do_dialog(goto_dialog, 0);
+  shutdown_moveable(goto_dialog);
+  scare_mouse();
 
 	offset = parse_number(goto_num);
 }
 
-void skip_bye()
-{
+void
+skip_bye() {
 	sprintf(gotottt, "Skip Value:");
 	
 	sprintf(goto_num, "%i", offset);
-	unscare_mouse();
-	
-	init_moveable(goto_dialog);
-	
-	show_mouse(screen);
-	
-	do_dialog (goto_dialog, 0);
-	
-	shutdown_moveable(goto_dialog);
-	
-	scare_mouse();
-	
+  unscare_mouse();
+  init_moveable(goto_dialog);
+  show_mouse(screen);
+  do_dialog (goto_dialog, 0);
+  shutdown_moveable(goto_dialog);
+  scare_mouse();
+
 	skip = parse_number(goto_num);
 }
 
-void prepare_save_name()
-{
+void
+prepare_save_name() {
 	char temp[256];
 	char temp2[256];
 	int t;
@@ -523,14 +351,12 @@ void prepare_save_name()
 	strcpy(temp, save_name);
 	t = strlen(temp);
 
-	while (t >= 0 && temp[t] != '.')
-	{
+  while (t >= 0 && temp[t] != '.') {
 		t--;
 	}
 	temp[t] = 0;
 	ok = false;
-	if (t > 3)
-	{
+  if (t > 3) {
 		if (temp[t-1] >= '0' && temp[t-1] <= '9' &&
 			temp[t-2] >= '0' && temp[t-2] <= '9' &&
 			temp[t-3] >= '0' && temp[t-3] <= '9')
@@ -538,13 +364,10 @@ void prepare_save_name()
 			ok = true;
 		}
 	}
-	if (!ok)
-	{
+  if (!ok) {
 		strcat(temp, "000.bmp");
 		contin_save = 1;
-	}
-	else
-	{
+  } else {
 		sprintf(temp2, "%03i.bmp", contin_save);
 		temp[t-3] = 0;
 		strcat(temp, temp2);
@@ -552,9 +375,9 @@ void prepare_save_name()
 	}
 	strcpy(save_name,temp);
 }
-
-void save(bool cont)
-{
+*/
+/*
+void save(bool cont) {
 	int t;
 
 	if (cont)
@@ -790,7 +613,7 @@ int find_chunk(char * name)
 		}
 		add = mem[pos+4]*256*256*256+mem[pos+5]*256*256+mem[pos+6]*256+mem[pos+7]+4;
 		pos += add;
-		/* alignment */
+    // alignment
 		len2 = add & 3;
 		pos -= len2;
 		
@@ -852,10 +675,10 @@ void grab_uae3aga()
 		set_pallete(pal);			
 	}
 }
-
-
-void getpalettefile()
-{
+*/
+/*
+void
+getpalettefile() {
 	BITMAP * t;
 
 	FILE * f;
@@ -875,7 +698,8 @@ void getpalettefile()
 		}
 	}
 }
-
+*/
+/*
 int main(int argc, char *argv[])
 {
 
@@ -1226,3 +1050,72 @@ int main(int argc, char *argv[])
 	return 0;
 }
 END_OF_MAIN()
+*/
+
+gr_bitmap_t::gr_bitmap_t(size_t width, size_t height) {
+  palette = NULL;
+
+  this->width = width;
+  this->height = height;
+
+  if ((width * height) > 0) {
+    bitmap = new gr_color_t[width * height];
+    memset(bitmap, 0xFF, width * height * sizeof(gr_color_t));
+  } else {
+    bitmap = NULL;
+  }
+}
+
+gr_bitmap_t::~gr_bitmap_t() {
+  if (bitmap != NULL) {
+    delete[] bitmap;
+  }
+}
+
+void
+gr_bitmap_t::putpixel(size_t x, size_t y, gr_color_t color) {
+  if (bitmap == NULL) {
+    return;
+  }
+
+  bitmap[y * width + x] = color;
+}
+
+void
+gr_bitmap_t::putpixel(size_t x, size_t y, size_t color) {
+  if ((bitmap == NULL) || (palette == NULL)) {
+    return;
+  }
+
+  bitmap[y * width + x] = palette[color];
+}
+
+void
+gr_bitmap_t::clear_to_color(size_t color) {
+  if ((bitmap == NULL) || (palette == NULL)) {
+    return;
+  }
+
+  gr_color_t col = palette[color];
+
+  for (size_t i = 0; i < width * height; i++) {
+    bitmap[i] = col;
+  }
+}
+
+void
+gr_ripper_client::set_ripper(gr_ripper_t *ripper) {
+  if (ripper == this->ripper) {
+    return;
+  }
+
+  if (this->ripper != NULL) {
+//    this->ripper->del_handler(this);
+    this->ripper = NULL;
+  }
+
+  this->ripper = ripper;
+  if (ripper != NULL) {
+    ripper->add_handler(this);
+  }
+}
