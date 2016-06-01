@@ -1,7 +1,25 @@
-#include "mainwindow.h"
-#include "rippermodel.h"
-#include "imagedelegate.h"
-#include "inspector.h"
+/*
+ * mainwindow.cpp - GxfRip
+ *
+ * Copyright (C) 2016  Wicked_Digger <wicked_digger@mail.ru>
+ *
+ * This file is part of gfxrip.
+ *
+ * gfxrip is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * gfxrip is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with gfxrip.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "src/mainwindow.h"
 
 #include <QLabel>
 #include <QFileDialog>
@@ -12,6 +30,10 @@
 #include <QToolBar>
 #include <QDockWidget>
 #include <QMenuBar>
+
+#include "src/rippermodel.h"
+#include "src/imagedelegate.h"
+#include "src/inspector.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   statusBar = new QStatusBar(this);
@@ -56,8 +78,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   addRipperAction("W", ":/res/height_increase.svg", SLOT(heightIncrease()));
   addRipperAction("S", ":/res/height_decrease.svg", SLOT(heightDecrease()));
 
-  addRipperAction("Shift+W", ":/res/height_increase8.svg", SLOT(heightIncrease8()));
-  addRipperAction("Shift+S", ":/res/height_decrease8.svg", SLOT(heightDecrease8()));
+  addRipperAction("Shift+W", ":/res/height_increase8.svg",
+                  SLOT(heightIncrease8()));
+  addRipperAction("Shift+S", ":/res/height_decrease8.svg",
+                  SLOT(heightDecrease8()));
 
   addRipperAction("E", ":/res/width_increase.svg", SLOT(bitsIncrease()));
   addRipperAction("D", ":/res/width_increase.svg", SLOT(bitsDecrease()));
@@ -72,15 +96,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   QAction *actionProperties = menuView->addAction("Properties");
   actionProperties->setCheckable(true);
   actionProperties->setChecked(!propsDock->isHidden());
-  connect(propsDock, SIGNAL(visibilityChanged(bool)), actionProperties, SLOT(setChecked(bool)));
-  connect(actionProperties, SIGNAL(toggled(bool)), propsDock, SLOT(setVisible(bool)));
+  connect(propsDock, SIGNAL(visibilityChanged(bool)), actionProperties,
+          SLOT(setChecked(bool)));
+  connect(actionProperties, SIGNAL(toggled(bool)), propsDock,
+          SLOT(setVisible(bool)));
 }
 
 MainWindow::~MainWindow() {
 }
 
 void
-MainWindow::addRipperAction(const QString &key, const QString &icon_path, const char *method) {
+MainWindow::addRipperAction(const QString &key, const QString &icon_path,
+                            const char *method) {
   QAction *action = toolBar->addAction(QIcon(icon_path), key, this, method);
   action->setShortcut(QKeySequence(key));
 }

@@ -1,12 +1,34 @@
-#include "rippermodel.h"
+/*
+ * rippermodel.h - GxfRip
+ *
+ * Copyright (C) 2016  Wicked_Digger <wicked_digger@mail.ru>
+ *
+ * This file is part of gfxrip.
+ *
+ * gfxrip is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * gfxrip is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with gfxrip.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "src/rippermodel.h"
 
 #include <QModelIndex>
 #include <QImage>
 #include <QPixmap>
 
-#include "gfxrip.h"
+#include "src/gfxrip.h"
 
-RipperModel::RipperModel(gr_ripper_t *ripper, QObject *parent) : QAbstractItemModel(parent) {
+RipperModel::RipperModel(gr_ripper_t *ripper, QObject *parent)
+  : QAbstractItemModel(parent) {
   set_ripper(ripper);
 }
 
@@ -23,13 +45,14 @@ QVariant
 RipperModel::data(const QModelIndex &index, int role) const {
   QVariant result;
 
-  switch(role) {
+  switch (role) {
     case Qt::DisplayRole:
       result = QString::number(index.row());
       break;
     case Qt::DecorationRole: {
       gr_bitmap_t *img = ripper->get_image(index.row());
-      QImage image(img->get_data(), img->get_width(), img->get_height(), QImage::Format_ARGB32);
+      QImage image(img->get_data(), img->get_width(), img->get_height(),
+                   QImage::Format_ARGB32);
       delete img;
       result = QPixmap::fromImage(image);
       break;

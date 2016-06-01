@@ -1,5 +1,26 @@
-#ifndef GFXRIP_H
-#define GFXRIP_H
+/*
+ * gfxrip.h - GxfRip
+ *
+ * Copyright (C) 2007  TC <tomcat@sgn.net>
+ *
+ * This file is part of gfxrip.
+ *
+ * gfxrip is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * gfxrip is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with gfxrip.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef SRC_GFXRIP_H_
+#define SRC_GFXRIP_H_
 
 #include <cstddef>
 #include <list>
@@ -92,13 +113,7 @@ class gr_ripper_t {
   bool reverse;
   int mode;
   int palsearchmode;
-
-  bool zoom = false;
-
-  char goto_num[255];
-
-  int ttt=0;
-  int palfound = 0;
+  int palfound;
 
   int bplorder[8] = {0,1,2,3,4,5,6,7};
 
@@ -132,4 +147,4 @@ class gr_ripper_t {
   void data_changed();
 };
 
-#endif // GFXRIP_H
+#endif  // SRC_GFXRIP_H_

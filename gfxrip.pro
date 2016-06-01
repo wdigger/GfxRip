@@ -27,3 +27,5 @@ HEADERS  += src/mainwindow.h \
 
 RESOURCES += \
     res/resources.qrc
+
+INCLUDEPATH += ./

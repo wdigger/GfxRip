@@ -1,5 +1,26 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+/*
+ * mainwindow.h - GxfRip
+ *
+ * Copyright (C) 2016  Wicked_Digger <wicked_digger@mail.ru>
+ *
+ * This file is part of gfxrip.
+ *
+ * gfxrip is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * gfxrip is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with gfxrip.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef SRC_MAINWINDOW_H_
+#define SRC_MAINWINDOW_H_
 
 #include <QMainWindow>
 
@@ -22,11 +43,12 @@ class MainWindow : public QMainWindow {
   Inspector *inspector;
 
  public:
-  MainWindow(QWidget *parent = NULL);
-  ~MainWindow();
+  explicit MainWindow(QWidget *parent = NULL);
+  virtual ~MainWindow();
 
  protected:
-  void addRipperAction(const QString &key, const QString &icon_path, const char *method);
+  void addRipperAction(const QString &key, const QString &icon_path,
+                       const char *method);
 
  public slots:
   void dataChanged();
@@ -41,4 +63,4 @@ class MainWindow : public QMainWindow {
   void bitsDecrease();
 };
 
-#endif // MAINWINDOW_H
+#endif  // SRC_MAINWINDOW_H_
