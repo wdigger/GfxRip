@@ -22,34 +22,34 @@ NOTE: You must know atleast some basics about how amiga displays the
       There is a little guide for those who don't exactly know what
       they are doing... hope that one helps !
 
-Q/A                - X Size by 8 pixels
-W/S                - Y Size by 1 pixel
-W/S + SHIFT        - Y Size by 8 pixels
-E/D                - Bits (Number of colors)
-R/F                - Skip Bytes between pictures or bitplanes
-R/F + SHIFT        - Skip Bytes Faster (by 8 bytes)
-LEFT/RIGHT         - Picture Left/Right by 8 pixels (Offset by 1 byte)
-UP/DOWN            - Picture Up/Down by 1 line (Offset by X Size/8)
-UP/DOWN + SHIFT    - Picture Up/Down by 8 lines (Offset by X Size)
-LEFT/RIGHT + SHIFT - Next/Previous Picture (Offset by X Size * Y Size)
-G                  - Set Offset
-H                  - Set Skip Value
-X                  - Set Skip Mode (P - Pictures , B - Bitplanes)
-P                  - Save picture(s)
-P + SHIFT          - Save picture(s) with Auto-Incremental Name
-L                  - Search for Amiga Palette (Press again for more)
-Z                  - Palette search mode (look below for description)
-K                  - Revert to standard Palette
-J                  - Revert to last found Amiga palette
-B                  - Set colour 0 to Magenta (255,0,255) - Transparent
-N                  - Normal or Reverse order of bitplanes
-0-7                - Select which picture goes into which bitplane
-0-7 + SHIFT        - Same as above only in reverse direction
-M                  - Bitplane Mode , see below !
-C                  - Get Colour palette from a file
-U                  - Turns on/off a Zoom window on the bottom/right corner
-ESC                - Go out
-CTRL + INSERT      - Copy the first image to Clipboard
+* Q/A                - X Size by 8 pixels
+* W/S                - Y Size by 1 pixel
+* W/S + SHIFT        - Y Size by 8 pixels
+* E/D                - Bits (Number of colors)
+* R/F                - Skip Bytes between pictures or bitplanes
+* R/F + SHIFT        - Skip Bytes Faster (by 8 bytes)
+* LEFT/RIGHT         - Picture Left/Right by 8 pixels (Offset by 1 byte)
+* UP/DOWN            - Picture Up/Down by 1 line (Offset by X Size/8)
+* UP/DOWN + SHIFT    - Picture Up/Down by 8 lines (Offset by X Size)
+* LEFT/RIGHT + SHIFT - Next/Previous Picture (Offset by X Size * Y Size)
+* G                  - Set Offset
+* H                  - Set Skip Value
+* X                  - Set Skip Mode (P - Pictures , B - Bitplanes)
+* P                  - Save picture(s)
+* P + SHIFT          - Save picture(s) with Auto-Incremental Name
+* L                  - Search for Amiga Palette (Press again for more)
+* Z                  - Palette search mode (look below for description)
+* K                  - Revert to standard Palette
+* J                  - Revert to last found Amiga palette
+* B                  - Set colour 0 to Magenta (255,0,255) - Transparent
+* N                  - Normal or Reverse order of bitplanes
+* 0-7                - Select which picture goes into which bitplane
+* 0-7 + SHIFT        - Same as above only in reverse direction
+* M                  - Bitplane Mode , see below !
+* C                  - Get Colour palette from a file
+* U                  - Turns on/off a Zoom window on the bottom/right corner
+* ESC                - Go out
+* CTRL + INSERT      - Copy the first image to Clipboard
 
 Command Line Arguments:
 -----------------------
@@ -68,21 +68,21 @@ them on the screen. The up->down will do the opposite.
 
 Bitplane Mode:
 --------------
-AM = Amiga standard : Each bitplane is in its own picture,
-ST = ST standard :    Same picture holds all bitplanes - each other line
-                      is a new bitplane - some tiles are in this format)
-SP = Amiga Sprite :   This is a special mode to rip the AMIGA format
-                      sprites in 16 colours (4 bitplanes). The sprites are
-                      always 16 pixels wide (X Size) and can be any Y size.
-                      You can spot them by seeing two bitmaps with 2
-                      pictures in each bitmap (if looking in AM mode).
-C+ = CPC Double :     CPC Standard Double Byte mode. One Character is one
-                      bitplane - the Bytes follow each other for Plane 0,1.
-                      (Head Over Heels, Batman)
-C- = CPC Single :     CPC Standard Single Byte mode. One Character holds
-                      BOTH bitplanes (4 pixels per Byte). This is used in
-                      many games. Sometimes Bitplanes are mirrored.
-                      (Amaurote, Ultimate games, etc.)
+* AM = Amiga standard : Each bitplane is in its own picture,
+* ST = ST standard :    Same picture holds all bitplanes - each other line
+                        is a new bitplane - some tiles are in this format)
+* SP = Amiga Sprite :   This is a special mode to rip the AMIGA format
+                        sprites in 16 colours (4 bitplanes). The sprites are
+                        always 16 pixels wide (X Size) and can be any Y size.
+                        You can spot them by seeing two bitmaps with 2
+                        pictures in each bitmap (if looking in AM mode).
+* C+ = CPC Double :     CPC Standard Double Byte mode. One Character is one
+                        bitplane - the Bytes follow each other for Plane 0,1.
+                        (Head Over Heels, Batman)
+* C- = CPC Single :     CPC Standard Single Byte mode. One Character holds
+                        BOTH bitplanes (4 pixels per Byte). This is used in
+                        many games. Sometimes Bitplanes are mirrored.
+                        (Amaurote, Ultimate games, etc.)
 Palette Search:
 ---------------
 By pressing this button the file is searched for a possible copperlist.
@@ -92,16 +92,16 @@ this mode then you will have to use one of the other three modes.
 
 There are four palette search modes:
 
-E = ECS UAE SaveState - The DEFAULT mode : the palette is extracted from the
-    UAE SaveState snapshot (if found). ECS (upto 64 colours) only !
-A = AGA UAE SaveState - the palette is extracted from the UAE SaveState
-    snapshot (if found). AGA colours (upto 256) are extracted !
-S = Simple - Doesn't find so many palettes, and it is fast, searches whole
-    memory for possible palette entries (2 possible entries, always in
-    sequence).
-X = Advanced - The copperlist is searched in a way that when 4 possible
-    colour entries (not needed to be in sequence) are found it is reported
-    as a valid palette.
+* E = ECS UAE SaveState - The DEFAULT mode : the palette is extracted from the
+      UAE SaveState snapshot (if found). ECS (upto 64 colours) only !
+* A = AGA UAE SaveState - the palette is extracted from the UAE SaveState
+      snapshot (if found). AGA colours (upto 256) are extracted !
+* S = Simple - Doesn't find so many palettes, and it is fast, searches whole
+      memory for possible palette entries (2 possible entries, always in
+      sequence).
+* X = Advanced - The copperlist is searched in a way that when 4 possible
+      colour entries (not needed to be in sequence) are found it is reported
+      as a valid palette.
 
 Make sure you save the Snapshots (SaveStates) as UNCOMPRESSED in WinUAE !!!
 
