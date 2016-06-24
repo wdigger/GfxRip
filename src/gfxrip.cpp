@@ -72,14 +72,13 @@ gr_ripper_t::set_source(const void *data, size_t size) {
 
 size_t
 gr_ripper_t::get_image_count() {
-  return (size_t)((static_cast<float>(source_size) /
+  return (size_t)((static_cast<float>(source_size - offset) /
                    static_cast<float>(get_image_size())) + 1.f);
 }
 
 gr_bitmap_t *
 gr_ripper_t::get_image(size_t index) {
   gr_bitmap_t *bitmap = new gr_bitmap_t(blXSize*8, blYSize);
-  bitmap->set_palette(palette);
   drawbitmap(bitmap, get_image_offset(index), 0, 0);
   return bitmap;
 }
@@ -165,7 +164,8 @@ void
 gr_ripper_t::drawbitmap(gr_bitmap_t *bmp, size_t pos, size_t xx, size_t yy) {
   for (size_t x = 0; x < blXSize*8; x ++) {
     for (size_t y = 0; y < blYSize; y++) {
-      bmp->putpixel(xx+x, yy+y, getpixelcol(pos, x, y));
+      size_t color = getpixelcol(pos, x, y);
+      bmp->putpixel(xx+x, yy+y, palette[color]);
     }
   }
 }
@@ -231,7 +231,7 @@ gr_ripper_t::get_status() {
   }
 
   char str[1024];
-  snprintf(str, sizeof(str), "Off:%7i Siz: X:%4lu Y:%4lu Bit:%lu Pal%c:%7i "
+  snprintf(str, sizeof(str), "Off:%7lu Siz: X:%4lu Y:%4lu Bit:%lu Pal%c:%7i "
                              "Mode:%s Skip-%c:%4i Order:%c %i%i%i%i%i%i%i%i",
           offset, blXSize*8, blYSize, bits, pmoder[palsearchmode],
           palfound, moder, skipmoder, skip, rev,
@@ -253,16 +253,16 @@ gr_ripper_t::generate_random_palette(size_t size) {
 
   srand(1);
   for (size_t i = 0; i < size; i++) {
-    palette[i].r = std::rand()%64;
-    palette[i].g = std::rand()%64;
-    palette[i].b = std::rand()%64;
+    palette[i].r = std::rand() % size;
+    palette[i].g = std::rand() % size;
+    palette[i].b = std::rand() % size;
     palette[i].a = 0xFF;
   }
-  palette[1].r = palette[1].g = palette[1].b = 0;
-  palette[0].r = palette[0].g = palette[0].b = 63;
-  palette[254].r = palette[254].g = palette[254].b = 0;
-  palette[253].r = palette[253].g = palette[253].b = 50;
-  palette[253].b = 53;
+  palette[1].r = palette[1].g = palette[1].b = 0xFF;
+  palette[0].r = palette[0].g = palette[0].b = 0x00;
+  palette[size-1].r = palette[size-1].g = palette[size-1].b = 0x00;
+  palette[size-2].r = palette[size-2].g = palette[size-2].b = 0xFF/2;
+  palette[size-2].b = 0xFF/2 + 2;
 }
 
 void
@@ -303,9 +303,17 @@ gr_ripper_t::set_bits(size_t bits) {
   data_changed();
 }
 
-gr_bitmap_t::gr_bitmap_t(size_t width, size_t height) {
-  palette = NULL;
+void
+gr_ripper_t::set_offset(size_t offset) {
+  if (offset > (source_size - 1)) {
+    return;
+  }
 
+  this->offset = offset;
+  data_changed();
+}
+
+gr_bitmap_t::gr_bitmap_t(size_t width, size_t height) {
   this->width = width;
   this->height = height;
 
@@ -333,24 +341,13 @@ gr_bitmap_t::putpixel(size_t x, size_t y, gr_color_t color) {
 }
 
 void
-gr_bitmap_t::putpixel(size_t x, size_t y, size_t color) {
-  if ((bitmap == NULL) || (palette == NULL)) {
+gr_bitmap_t::fill(gr_color_t color) {
+  if (bitmap == NULL) {
     return;
   }
-
-  bitmap[y * width + x] = palette[color];
-}
-
-void
-gr_bitmap_t::clear_to_color(size_t color) {
-  if ((bitmap == NULL) || (palette == NULL)) {
-    return;
-  }
-
-  gr_color_t col = palette[color];
 
   for (size_t i = 0; i < width * height; i++) {
-    bitmap[i] = col;
+    bitmap[i] = color;
   }
 }
 

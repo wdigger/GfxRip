@@ -30,6 +30,7 @@
 #include <QToolBar>
 #include <QDockWidget>
 #include <QMenuBar>
+#include <QHeaderView>
 
 #include "src/rippermodel.h"
 #include "src/imagedelegate.h"
@@ -48,6 +49,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   tableView = new QTableView(this);
   tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   tableView->setBackgroundRole(QPalette::Base);
+  tableView->horizontalHeader()->setVisible(false);
+  tableView->verticalHeader()->setVisible(false);
+  tableView->setShowGrid(false);
 
   setCentralWidget(tableView);
 
@@ -85,6 +89,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
   addRipperAction("E", ":/res/width_increase.svg", SLOT(bitsIncrease()));
   addRipperAction("D", ":/res/width_increase.svg", SLOT(bitsDecrease()));
+
+  addRipperAction("Left", ":/res/width_increase.svg", SLOT(offsetIncrease()));
+  addRipperAction("Right", ":/res/width_increase.svg", SLOT(offsetDecrease()));
 
   QDockWidget *propsDock = new QDockWidget(this);
   addDockWidget(Qt::RightDockWidgetArea, propsDock);
@@ -167,4 +174,15 @@ void
 MainWindow::bitsDecrease() {
   size_t bits = ripper->get_bits();
   ripper->set_bits(--bits);
+}
+
+void
+MainWindow::offsetIncrease() {
+  size_t offset = ripper->get_offset();
+  ripper->set_offset(++offset);
+}
+
+void MainWindow::offsetDecrease() {
+  size_t offset = ripper->get_offset();
+  ripper->set_offset(--offset);
 }

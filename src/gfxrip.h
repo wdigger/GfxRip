@@ -26,10 +26,10 @@
 #include <list>
 
 typedef struct {
-  unsigned char a;
-  unsigned char r;
   unsigned char g;
   unsigned char b;
+  unsigned char r;
+  unsigned char a;
 } gr_color_t;
 
 class gr_palette_t {
@@ -40,22 +40,18 @@ class gr_bitmap_t {
   size_t width;
   size_t height;
   gr_color_t *bitmap;
-  gr_color_t *palette;
 
  public:
   gr_bitmap_t(size_t width, size_t height);
   virtual ~gr_bitmap_t();
 
-  void set_palette(gr_color_t *palette) { this->palette = palette; }
-
   void putpixel(size_t x, size_t y, gr_color_t color);
-  void putpixel(size_t x, size_t y, size_t color);
 
   unsigned char *get_data() { return (unsigned char*)bitmap; }
   size_t get_width() { return width; }
   size_t get_height() { return height; }
 
-  void clear_to_color(size_t color);
+  void fill(gr_color_t color);
 };
 
 class gr_ripper_handler {
@@ -100,7 +96,7 @@ class gr_ripper_t {
   gr_color_t *palette;
   size_t palette_size;
 
-  int offset;
+  size_t offset;
   size_t blXSize;
   size_t blYSize;
 
@@ -132,10 +128,13 @@ class gr_ripper_t {
   size_t get_width() { return blXSize; }
   size_t get_height() { return blYSize; }
   size_t get_bits() { return bits; }
+  size_t get_size() { return source_size; }
+  size_t get_offset() { return offset; }
 
   void set_width(size_t width);
   void set_height(size_t height);
   void set_bits(size_t bits);
+  void set_offset(size_t offset);
 
  protected:
   size_t getpixelcol(size_t pos, size_t x, size_t y);

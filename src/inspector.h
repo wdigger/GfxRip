@@ -23,17 +23,29 @@
 #define SRC_INSPECTOR_H_
 
 #include <QWidget>
+#include <QVector>
 
 #include "src/gfxrip.h"
 
 class QSpinBox;
+class QLabel;
+class QCheckBox;
 
 class Inspector : public QWidget, public gr_ripper_client {
   Q_OBJECT
 
  protected:
+  QLabel *labelSize;
+  QLabel *labelFrames;
+  QSpinBox *spinOffset;
+
   QSpinBox *spinWidth;
   QSpinBox *spinHeight;
+
+  QSpinBox *spinBits;
+  QLabel *labelColors;
+  QVector<QCheckBox*> bitsSkip;
+  QVector<QCheckBox*> bitsFill;
 
  public:
   explicit Inspector(gr_ripper_t *ripper, QWidget *parent = NULL);

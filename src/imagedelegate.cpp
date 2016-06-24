@@ -30,13 +30,19 @@ void
 ImageDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                      const QModelIndex &index) const {
   QPixmap pixmap = index.data(Qt::DecorationRole).value<QPixmap>();
-  painter->drawPixmap(option.rect, pixmap, QRectF(0, 0, pixmap.width(),
-                                                  pixmap.height()));
+  QRect r;
+  r.setLeft(option.rect.left() + 5);
+  r.setTop(option.rect.top() + 5);
+  r.setWidth(pixmap.width());
+  r.setHeight(pixmap.height());
+  painter->drawPixmap(r, pixmap, QRectF(0, 0, pixmap.width(),
+                                        pixmap.height()));
 }
 
 QSize
 ImageDelegate::sizeHint(const QStyleOptionViewItem & /*option*/,
                         const QModelIndex &index) const {
   QSize size = index.data(Qt::SizeHintRole).toSize();
+  size += QSize(10, 10);
   return size;
 }

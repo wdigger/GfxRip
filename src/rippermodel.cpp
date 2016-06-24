@@ -51,10 +51,12 @@ RipperModel::data(const QModelIndex &index, int role) const {
       break;
     case Qt::DecorationRole: {
       gr_bitmap_t *img = ripper->get_image(index.row());
-      QImage image(img->get_data(), img->get_width(), img->get_height(),
-                   QImage::Format_ARGB32);
+      QImage *image = new QImage(img->get_data(),
+                                 img->get_width(), img->get_height(),
+                                 QImage::Format_ARGB32);
+      result = QPixmap::fromImage(*image);
       delete img;
-      result = QPixmap::fromImage(image);
+      delete image;
       break;
     }
     case Qt::SizeHintRole: {

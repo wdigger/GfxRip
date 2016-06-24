@@ -61,6 +61,8 @@ class MainWindow : public QMainWindow {
   void heightDecrease8();
   void bitsIncrease();
   void bitsDecrease();
+  void offsetIncrease();
+  void offsetDecrease();
 };
 
 #endif  // SRC_MAINWINDOW_H_
