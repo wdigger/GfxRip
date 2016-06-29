@@ -87,6 +87,14 @@ class gr_ripper_t {
     skip_after_bitplane
   } skip_mode_t;
 
+  typedef enum {
+    mode_am,  // Amiga type bitplanes
+    mode_st,  // ST Type bitplanes
+    mode_sp,  // Amiga Sprite !!!
+    mode_cp,  // CPC gfx for Bat-Man / HoH
+    mode_cm,  // CPC gfx for Ultimate games
+  } mode_t;
+
  protected:
   std::list<gr_ripper_handler*> handlers;
 
@@ -107,7 +115,7 @@ class gr_ripper_t {
   char skipmoder;
 
   bool reverse;
-  int mode;
+  mode_t mode;
   int palsearchmode;
   int palfound;
 
@@ -130,11 +138,13 @@ class gr_ripper_t {
   size_t get_bits() { return bits; }
   size_t get_size() { return source_size; }
   size_t get_offset() { return offset; }
+  mode_t get_mode() { return mode; }
 
   void set_width(size_t width);
   void set_height(size_t height);
   void set_bits(size_t bits);
   void set_offset(size_t offset);
+  void set_mode(mode_t mode);
 
  protected:
   size_t getpixelcol(size_t pos, size_t x, size_t y);

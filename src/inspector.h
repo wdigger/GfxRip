@@ -24,6 +24,7 @@
 
 #include <QWidget>
 #include <QVector>
+#include <QButtonGroup>
 
 #include "src/gfxrip.h"
 
@@ -46,15 +47,17 @@ class Inspector : public QWidget, public gr_ripper_client {
   QLabel *labelColors;
   QVector<QCheckBox*> bitsSkip;
   QVector<QCheckBox*> bitsFill;
+  QButtonGroup *modeGroup;
 
  public:
-  explicit Inspector(gr_ripper_t *ripper, QWidget *parent = NULL);
+  Inspector(gr_ripper_t *ripper, QWidget *parent = NULL);
 
   virtual void image_updated();
 
  signals:
 
  public slots:
+  void on_mode_changed(int mode);
 };
 
 #endif  // SRC_INSPECTOR_H_

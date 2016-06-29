@@ -74,22 +74,25 @@ Inspector::Inspector(gr_ripper_t *ripper, QWidget *parent) : QWidget(parent) {
   mainLayout->addWidget(groupBox);
   QVBoxLayout *groupLayout = new QVBoxLayout(groupBox);
   groupBox->setLayout(groupLayout);
-  QButtonGroup *modeGroup = new QButtonGroup(groupBox);
+  modeGroup = new QButtonGroup(groupBox);
   QRadioButton *button = new QRadioButton("AM", groupBox);
-  modeGroup->addButton(button);
+  modeGroup->addButton(button, gr_ripper_t::mode_am);
   groupLayout->addWidget(button);
   button = new QRadioButton("ST", groupBox);
-  modeGroup->addButton(button);
+  modeGroup->addButton(button, gr_ripper_t::mode_st);
   groupLayout->addWidget(button);
   button = new QRadioButton("SP", groupBox);
-  modeGroup->addButton(button);
+  modeGroup->addButton(button, gr_ripper_t::mode_sp);
   groupLayout->addWidget(button);
   button = new QRadioButton("C+", groupBox);
-  modeGroup->addButton(button);
+  modeGroup->addButton(button, gr_ripper_t::mode_cp);
   groupLayout->addWidget(button);
   button = new QRadioButton("C-", groupBox);
-  modeGroup->addButton(button);
+  modeGroup->addButton(button, gr_ripper_t::mode_cm);
   groupLayout->addWidget(button);
+  modeGroup->button(gr_ripper_t::mode_am)->setChecked(true);
+  connect(modeGroup, SIGNAL(buttonClicked(int)),
+          this, SLOT(on_mode_changed(int)));
 
   groupBox = new QGroupBox("Bitplains:", this);
   mainLayout->addWidget(groupBox);
@@ -142,4 +145,9 @@ Inspector::image_updated() {
     bitsSkip[i]->setVisible(visible);
     bitsFill[i]->setVisible(visible);
   }
+}
+
+void
+Inspector::on_mode_changed(int mode) {
+  ripper->set_mode((gr_ripper_t::mode_t)mode);
 }

@@ -45,7 +45,7 @@ gr_ripper_t::gr_ripper_t() {
   skipmode = skip_after_picture;
 
   reverse = false;
-  mode = 0;
+  mode = mode_am;
   palsearchmode = 2;
 }
 
@@ -99,18 +99,15 @@ gr_ripper_t::getpixelcol(size_t pos, size_t x, size_t y) {
 
   for (i=0; i < bits; i++) {
     switch (mode) {
-    case 0:
-      // Amiga type bitplanes
+    case mode_am:
       p = pos+(blXSize*blYSize)*(i);
       nn = x+(y*(blXSize*8));
       break;
-    case 1:
-      // ST Type bitplanes
+    case mode_st:
       p = pos+blXSize*(i);
       nn = x+(bits*y*(blXSize*8));
       break;
-    case 2:
-      // mode == 2  // Amiga Sprite !!!
+    case mode_sp:
       if (i < 2) {
         p = pos+blXSize*(i);
         nn = x+((2*y)*(blXSize*8));
@@ -119,17 +116,16 @@ gr_ripper_t::getpixelcol(size_t pos, size_t x, size_t y) {
         nn = x+((2*y)*(blXSize*8));
       }
       break;
-    case 3:
-      // mode == 3 // CPC gfx for Bat-Man / HoH
+    case mode_cp:
       p = pos+(x/8)+i;
       nn = x+((2*y)*(blXSize*8));
       break;
-    case 4:
-      //  mode ==4 // CPC gfx for Ultimate games
+    case mode_cm:
       p = pos+(x/4)+(blXSize*y*2);
       nn = (i*4)+x%4;
       break;
     }
+
     if (skipmode == 1) {
       p+=skip*i;
     }
@@ -304,12 +300,22 @@ gr_ripper_t::set_bits(size_t bits) {
 }
 
 void
-gr_ripper_t::set_offset(size_t offset) {
-  if (offset > (source_size - 1)) {
+gr_ripper_t::set_offset(size_t _offset) {
+  if (_offset > (source_size - 1)) {
     return;
   }
 
-  this->offset = offset;
+  offset = _offset;
+  data_changed();
+}
+
+void
+gr_ripper_t::set_mode(mode_t _mode) {
+  if (mode == _mode) {
+    return;
+  }
+
+  mode = _mode;
   data_changed();
 }
 
